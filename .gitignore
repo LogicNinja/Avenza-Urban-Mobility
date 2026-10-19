@@ -1,0 +1,19 @@
+
+# Database backups and temporary restore-test files
+database/backups/
+
+# Raw database export contains demo user data
+database/sql/02_existing_data_export.sql
+
+# Local credentials and environment files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Git and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

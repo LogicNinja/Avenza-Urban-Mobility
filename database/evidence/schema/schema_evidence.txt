@@ -1,0 +1,201 @@
+mysql>
+mysql> SHOW TABLES;
++------------------------+
+| Tables_in_avenza_db    |
++------------------------+
+| incidents              |
+| infrastructure_audit   |
+| pedestrian_density     |
+| road_segments          |
+| route_segments         |
+| route_summary          |
+| routes                 |
+| segment_infrastructure |
+| segment_transport      |
+| transport_stops        |
+| users                  |
++------------------------+
+11 rows in set (0.01 sec)
+
+mysql>
+mysql> SHOW CREATE TABLE users\G
+*************************** 1. row ***************************
+       Table: users
+Create Table: CREATE TABLE `users` (
+  `user_id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `email` varchar(150) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `role` varchar(10) NOT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`user_id`),
+  UNIQUE KEY `uq_users_email` (`email`),
+  CONSTRAINT `chk_users_role` CHECK ((`role` in (_utf8mb4'USER',_utf8mb4'ADMIN')))
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+1 row in set (0.00 sec)
+
+mysql> SHOW CREATE TABLE routes\G
+*************************** 1. row ***************************
+       Table: routes
+Create Table: CREATE TABLE `routes` (
+  `route_id` int NOT NULL AUTO_INCREMENT,
+  `created_by` int NOT NULL,
+  `route_name` varchar(100) NOT NULL,
+  `origin` varchar(100) NOT NULL,
+  `destination` varchar(100) NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`route_id`),
+  UNIQUE KEY `uq_routes_name` (`route_name`),
+  KEY `fk_routes_creator` (`created_by`),
+  CONSTRAINT `fk_routes_creator` FOREIGN KEY (`created_by`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT,
+  CONSTRAINT `chk_routes_different_locations` CHECK ((`origin` <> `destination`))
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+1 row in set (0.00 sec)
+
+mysql> SHOW CREATE TABLE road_segments\G
+*************************** 1. row ***************************
+       Table: road_segments
+Create Table: CREATE TABLE `road_segments` (
+  `segment_id` int NOT NULL AUTO_INCREMENT,
+  `road_name` varchar(100) NOT NULL,
+  `start_lat` decimal(9,6) NOT NULL,
+  `start_lon` decimal(9,6) NOT NULL,
+  `end_lat` decimal(9,6) NOT NULL,
+  `end_lon` decimal(9,6) NOT NULL,
+  `length_m` int NOT NULL,
+  PRIMARY KEY (`segment_id`),
+  CONSTRAINT `chk_end_lat` CHECK ((`end_lat` between -(90) and 90)),
+  CONSTRAINT `chk_end_lon` CHECK ((`end_lon` between -(180) and 180)),
+  CONSTRAINT `chk_segment_distinct_endpoints` CHECK (((`start_lat` <> `end_lat`) or (`start_lon` <> `end_lon`))),
+  CONSTRAINT `chk_segment_length` CHECK ((`length_m` > 0)),
+  CONSTRAINT `chk_start_lat` CHECK ((`start_lat` between -(90) and 90)),
+  CONSTRAINT `chk_start_lon` CHECK ((`start_lon` between -(180) and 180))
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+1 row in set (0.00 sec)
+
+mysql> SHOW CREATE TABLE route_segments\G
+*************************** 1. row ***************************
+       Table: route_segments
+Create Table: CREATE TABLE `route_segments` (
+  `route_id` int NOT NULL,
+  `segment_id` int NOT NULL,
+  `sequence_no` int NOT NULL,
+  PRIMARY KEY (`route_id`,`segment_id`),
+  UNIQUE KEY `uq_route_sequence` (`route_id`,`sequence_no`),
+  KEY `fk_route_segments_segment` (`segment_id`),
+  CONSTRAINT `fk_route_segments_route` FOREIGN KEY (`route_id`) REFERENCES `routes` (`route_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_route_segments_segment` FOREIGN KEY (`segment_id`) REFERENCES `road_segments` (`segment_id`) ON DELETE RESTRICT,
+  CONSTRAINT `chk_sequence_no` CHECK ((`sequence_no` > 0))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+1 row in set (0.00 sec)
+
+mysql> SHOW CREATE TABLE segment_infrastructure\G
+*************************** 1. row ***************************
+       Table: segment_infrastructure
+Create Table: CREATE TABLE `segment_infrastructure` (
+  `segment_id` int NOT NULL,
+  `lighting_level` tinyint NOT NULL,
+  `road_condition_level` tinyint NOT NULL,
+  `accessibility_level` tinyint NOT NULL,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`segment_id`),
+  CONSTRAINT `fk_infrastructure_segment` FOREIGN KEY (`segment_id`) REFERENCES `road_segments` (`segment_id`) ON DELETE RESTRICT,
+  CONSTRAINT `chk_accessibility_level` CHECK ((`accessibility_level` between 1 and 5)),
+  CONSTRAINT `chk_lighting_level` CHECK ((`lighting_level` between 1 and 5)),
+  CONSTRAINT `chk_road_condition_level` CHECK ((`road_condition_level` between 1 and 5))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+1 row in set (0.00 sec)
+
+mysql> SHOW CREATE TABLE pedestrian_density\G
+*************************** 1. row ***************************
+       Table: pedestrian_density
+Create Table: CREATE TABLE `pedestrian_density` (
+  `density_id` int NOT NULL AUTO_INCREMENT,
+  `segment_id` int NOT NULL,
+  `observed_at` datetime NOT NULL,
+  `density_level` tinyint NOT NULL,
+  `pedestrian_count` int DEFAULT NULL,
+  PRIMARY KEY (`density_id`),
+  UNIQUE KEY `uq_density_observation` (`segment_id`,`observed_at`),
+  CONSTRAINT `fk_density_segment` FOREIGN KEY (`segment_id`) REFERENCES `road_segments` (`segment_id`) ON DELETE RESTRICT,
+  CONSTRAINT `chk_density_level` CHECK ((`density_level` between 1 and 5)),
+  CONSTRAINT `chk_pedestrian_count` CHECK ((`pedestrian_count` >= 0))
+) ENGINE=InnoDB AUTO_INCREMENT=70 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+1 row in set (0.00 sec)
+
+mysql> SHOW CREATE TABLE transport_stops\G
+*************************** 1. row ***************************
+       Table: transport_stops
+Create Table: CREATE TABLE `transport_stops` (
+  `stop_id` int NOT NULL AUTO_INCREMENT,
+  `stop_name` varchar(100) NOT NULL,
+  `transport_type` varchar(15) NOT NULL,
+  `latitude` decimal(9,6) NOT NULL,
+  `longitude` decimal(9,6) NOT NULL,
+  PRIMARY KEY (`stop_id`),
+  CONSTRAINT `chk_stop_latitude` CHECK ((`latitude` between -(90) and 90)),
+  CONSTRAINT `chk_stop_longitude` CHECK ((`longitude` between -(180) and 180)),
+  CONSTRAINT `chk_transport_type` CHECK ((`transport_type` in (_utf8mb4'BUS',_utf8mb4'METRO',_utf8mb4'TRAIN',_utf8mb4'AUTO_STAND')))
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+1 row in set (0.00 sec)
+
+mysql> SHOW CREATE TABLE segment_transport\G
+*************************** 1. row ***************************
+       Table: segment_transport
+Create Table: CREATE TABLE `segment_transport` (
+  `segment_id` int NOT NULL,
+  `stop_id` int NOT NULL,
+  `distance_m` int NOT NULL,
+  PRIMARY KEY (`segment_id`,`stop_id`),
+  KEY `fk_segment_transport_stop` (`stop_id`),
+  CONSTRAINT `fk_segment_transport_segment` FOREIGN KEY (`segment_id`) REFERENCES `road_segments` (`segment_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_segment_transport_stop` FOREIGN KEY (`stop_id`) REFERENCES `transport_stops` (`stop_id`) ON DELETE RESTRICT,
+  CONSTRAINT `chk_distance_to_stop` CHECK ((`distance_m` >= 0))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+1 row in set (0.00 sec)
+
+mysql> SHOW CREATE TABLE incidents\G
+*************************** 1. row ***************************
+       Table: incidents
+Create Table: CREATE TABLE `incidents` (
+  `incident_id` int NOT NULL AUTO_INCREMENT,
+  `segment_id` int NOT NULL,
+  `verified_by` int NOT NULL,
+  `incident_type` varchar(30) NOT NULL,
+  `severity` varchar(10) NOT NULL,
+  `occurred_at` datetime NOT NULL,
+  `reported_at` datetime NOT NULL,
+  `source_observation_id` varchar(24) DEFAULT NULL,
+  PRIMARY KEY (`incident_id`),
+  UNIQUE KEY `uq_incident_source` (`source_observation_id`),
+  KEY `fk_incident_verifier` (`verified_by`),
+  KEY `idx_incidents_segment_occurred` (`segment_id`,`occurred_at`),
+  KEY `idx_incidents_type_severity` (`incident_type`,`severity`),
+  CONSTRAINT `fk_incident_segment` FOREIGN KEY (`segment_id`) REFERENCES `road_segments` (`segment_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_incident_verifier` FOREIGN KEY (`verified_by`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT,
+  CONSTRAINT `chk_incident_severity` CHECK ((`severity` in (_utf8mb4'LOW',_utf8mb4'MEDIUM',_utf8mb4'HIGH'))),
+  CONSTRAINT `chk_incident_times` CHECK ((`reported_at` >= `occurred_at`)),
+  CONSTRAINT `chk_incident_type` CHECK ((`incident_type` in (_utf8mb4'THEFT',_utf8mb4'HARASSMENT',_utf8mb4'ACCIDENT',_utf8mb4'OTHER')))
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+1 row in set (0.00 sec)
+
+mysql> SHOW CREATE TABLE infrastructure_audit\G
+*************************** 1. row ***************************
+       Table: infrastructure_audit
+Create Table: CREATE TABLE `infrastructure_audit` (
+  `audit_id` int NOT NULL AUTO_INCREMENT,
+  `segment_id` int NOT NULL,
+  `field_name` varchar(30) NOT NULL,
+  `old_value` tinyint DEFAULT NULL,
+  `new_value` tinyint DEFAULT NULL,
+  `changed_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`audit_id`),
+  KEY `idx_audit_segment_changed` (`segment_id`,`changed_at`),
+  CONSTRAINT `fk_audit_segment` FOREIGN KEY (`segment_id`) REFERENCES `road_segments` (`segment_id`) ON DELETE RESTRICT,
+  CONSTRAINT `chk_audit_field_name` CHECK ((`field_name` in (_utf8mb4'lighting_level',_utf8mb4'road_condition_level',_utf8mb4'accessibility_level')))
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+1 row in set (0.00 sec)
+
+mysql>
+mysql> notee;

@@ -1,0 +1,121 @@
+mysql>
+mysql> SELECT * FROM route_summary;
++----------+-----------------------------+-------------------------+-------------------------+---------------+------------------+---------------------------+
+| route_id | route_name                  | origin                  | destination             | segment_count | total_distance_m | estimated_travel_time_min |
++----------+-----------------------------+-------------------------+-------------------------+---------------+------------------+---------------------------+
+|        1 | Campus to Market Route      | PES University          | Market Road             |             3 |              750 |                      9.00 |
+|        2 | Jayanagar Community Route   | Jayanagar Demo Bus Stop | South End Road          |             5 |             1420 |                     17.04 |
+|        3 | Lalbagh Access Route        | Lalbagh Demo Gate Stop  | Wilson Garden Lane      |             5 |             1310 |                     15.72 |
+|        4 | Richmond Connectivity Route | Richmond Connector      | Market Road             |             5 |             1400 |                     16.80 |
+|        5 | East Bengaluru Connector    | Domlur Service Road     | Indiranagar 100 Ft Link |             5 |             1620 |                     19.44 |
+|        6 | South Bengaluru Link        | Koramangala Inner Road  | BTM Lake Road           |             5 |             1580 |                     18.96 |
++----------+-----------------------------+-------------------------+-------------------------+---------------+------------------+---------------------------+
+6 rows in set (0.00 sec)
+
+mysql>
+mysql> SELECT s.segment_id, s.road_name,
+    ->        si.lighting_level,
+    ->        si.road_condition_level,
+    ->        si.accessibility_level
+    -> FROM road_segments AS s
+    -> LEFT JOIN segment_infrastructure AS si
+    ->     ON s.segment_id = si.segment_id
+    -> ORDER BY s.segment_id;
++------------+-------------------------+----------------+----------------------+---------------------+
+| segment_id | road_name               | lighting_level | road_condition_level | accessibility_level |
++------------+-------------------------+----------------+----------------------+---------------------+
+|          1 | Demo Safety Corridor    |              5 |                    4 |                   5 |
+|          2 | Central Avenue          |              3 |                    4 |                   4 |
+|          3 | Market Road             |              2 |                    3 |                   3 |
+|          4 | Jayanagar Link Road     |              4 |                    4 |                   4 |
+|          5 | Basavanagudi Cross      |              3 |                    4 |                   3 |
+|          6 | South End Road          |              3 |                    3 |                   4 |
+|          7 | Lalbagh Access Road     |              5 |                    4 |                   4 |
+|          8 | Wilson Garden Lane      |              3 |                    3 |                   3 |
+|          9 | Richmond Connector      |              4 |                    4 |                   3 |
+|         10 | Residency Link Road     |              5 |                    4 |                   4 |
+|         11 | Indiranagar 100 Ft Link |              4 |                    4 |                   4 |
+|         12 | Domlur Service Road     |              3 |                    4 |                   3 |
+|         13 | Koramangala Inner Road  |              4 |                    3 |                   4 |
+|         14 | HSR Sector Link         |              5 |                    5 |                   4 |
+|         15 | BTM Lake Road           |              3 |                    3 |                   3 |
++------------+-------------------------+----------------+----------------------+---------------------+
+15 rows in set (0.00 sec)
+
+mysql>
+mysql> SELECT incident_type, severity, COUNT(*) AS incident_count
+    -> FROM incidents
+    -> GROUP BY incident_type, severity
+    -> ORDER BY incident_type, severity;
++---------------+----------+----------------+
+| incident_type | severity | incident_count |
++---------------+----------+----------------+
+| ACCIDENT      | HIGH     |              3 |
+| ACCIDENT      | MEDIUM   |              1 |
+| HARASSMENT    | HIGH     |              2 |
+| HARASSMENT    | MEDIUM   |              1 |
+| OTHER         | LOW      |              3 |
+| THEFT         | HIGH     |              1 |
+| THEFT         | MEDIUM   |              4 |
++---------------+----------+----------------+
+7 rows in set (0.00 sec)
+
+mysql>
+mysql> SELECT s.segment_id, s.road_name
+    -> FROM road_segments AS s
+    -> LEFT JOIN segment_infrastructure AS si
+    ->     ON s.segment_id = si.segment_id
+    -> WHERE si.segment_id IS NULL;
+Empty set (0.00 sec)
+
+mysql>
+mysql> SELECT s.segment_id, s.road_name,
+    ->        ts.stop_name, ts.transport_type,
+    ->        st.distance_m
+    -> FROM segment_transport AS st
+    -> JOIN road_segments AS s
+    ->     ON st.segment_id = s.segment_id
+    -> JOIN transport_stops AS ts
+    ->     ON st.stop_id = ts.stop_id
+    -> ORDER BY s.segment_id, st.distance_m;
++------------+-------------------------+----------------------------+----------------+------------+
+| segment_id | road_name               | stop_name                  | transport_type | distance_m |
++------------+-------------------------+----------------------------+----------------+------------+
+|          1 | Demo Safety Corridor    | Central Bus Stop           | BUS            |        180 |
+|          1 | Demo Safety Corridor    | Demo Metro Stop            | METRO          |        250 |
+|          2 | Central Avenue          | Central Bus Stop           | BUS            |        120 |
+|          2 | Central Avenue          | Market Bus Stop            | BUS            |        300 |
+|          3 | Market Road             | Market Bus Stop            | BUS            |        150 |
+|          4 | Jayanagar Link Road     | Jayanagar Demo Bus Stop    | BUS            |         90 |
+|          4 | Jayanagar Link Road     | South End Demo Metro       | METRO          |        450 |
+|          5 | Basavanagudi Cross      | Basavanagudi Demo Bus Stop | BUS            |        110 |
+|          5 | Basavanagudi Cross      | South End Demo Metro       | METRO          |        380 |
+|          6 | South End Road          | South End Demo Metro       | METRO          |         80 |
+|          6 | South End Road          | Jayanagar Demo Bus Stop    | BUS            |        420 |
+|          7 | Lalbagh Access Road     | Lalbagh Demo Gate Stop     | BUS            |        100 |
+|          7 | Lalbagh Access Road     | Central Bus Stop           | BUS            |        350 |
+|          8 | Wilson Garden Lane      | Lalbagh Demo Gate Stop     | BUS            |        280 |
+|          9 | Richmond Connector      | Richmond Demo Auto Stand   | AUTO_STAND     |         75 |
+|          9 | Richmond Connector      | Demo Metro Stop            | METRO          |        500 |
+|         10 | Residency Link Road     | Richmond Demo Auto Stand   | AUTO_STAND     |        240 |
+|         11 | Indiranagar 100 Ft Link | Indiranagar Demo Metro     | METRO          |        120 |
+|         12 | Domlur Service Road     | Indiranagar Demo Metro     | METRO          |        600 |
+|         13 | Koramangala Inner Road  | Koramangala Demo Bus Stop  | BUS            |         95 |
+|         14 | HSR Sector Link         | Koramangala Demo Bus Stop  | BUS            |        450 |
+|         15 | BTM Lake Road           | Market Bus Stop            | BUS            |        700 |
++------------+-------------------------+----------------------------+----------------+------------+
+22 rows in set (0.00 sec)
+
+mysql>
+mysql> CALL GetIncidentsBySegment(1);
++-------------+------------+---------------+----------+---------------------+---------------------+
+| incident_id | segment_id | incident_type | severity | occurred_at         | reported_at         |
++-------------+------------+---------------+----------+---------------------+---------------------+
+|           1 |          1 | HARASSMENT    | HIGH     | 2026-10-02 20:15:00 | 2026-10-02 21:00:00 |
++-------------+------------+---------------+----------+---------------------+---------------------+
+1 row in set (0.00 sec)
+
+Query OK, 0 rows affected (0.00 sec)
+
+mysql>
+mysql> notee;

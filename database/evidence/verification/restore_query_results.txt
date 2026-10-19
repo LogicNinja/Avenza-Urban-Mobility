@@ -1,0 +1,53 @@
+mysql> notee;
+mysql> SELECT * FROM route_summary;
++----------+-----------------------------+-------------------------+-------------------------+---------------+------------------+---------------------------+
+| route_id | route_name                  | origin                  | destination             | segment_count | total_distance_m | estimated_travel_time_min |
++----------+-----------------------------+-------------------------+-------------------------+---------------+------------------+---------------------------+
+|        1 | Campus to Market Route      | PES University          | Market Road             |             3 |              750 |                      9.00 |
+|        2 | Jayanagar Community Route   | Jayanagar Demo Bus Stop | South End Road          |             5 |             1420 |                     17.04 |
+|        3 | Lalbagh Access Route        | Lalbagh Demo Gate Stop  | Wilson Garden Lane      |             5 |             1310 |                     15.72 |
+|        4 | Richmond Connectivity Route | Richmond Connector      | Market Road             |             5 |             1400 |                     16.80 |
+|        5 | East Bengaluru Connector    | Domlur Service Road     | Indiranagar 100 Ft Link |             5 |             1620 |                     19.44 |
+|        6 | South Bengaluru Link        | Koramangala Inner Road  | BTM Lake Road           |             5 |             1580 |                     18.96 |
++----------+-----------------------------+-------------------------+-------------------------+---------------+------------------+---------------------------+
+6 rows in set (0.01 sec)
+
+mysql>
+mysql> CALL GetIncidentsBySegment(1);
++-------------+------------+---------------+----------+---------------------+---------------------+
+| incident_id | segment_id | incident_type | severity | occurred_at         | reported_at         |
++-------------+------------+---------------+----------+---------------------+---------------------+
+|           1 |          1 | HARASSMENT    | HIGH     | 2026-10-02 20:15:00 | 2026-10-02 21:00:00 |
++-------------+------------+---------------+----------+---------------------+---------------------+
+1 row in set (0.00 sec)
+
+Query OK, 0 rows affected (0.00 sec)
+
+mysql>
+mysql> SELECT 'users' AS table_name, COUNT(*) AS row_count FROM users
+    -> UNION ALL SELECT 'routes', COUNT(*) FROM routes
+    -> UNION ALL SELECT 'road_segments', COUNT(*) FROM road_segments
+    -> UNION ALL SELECT 'route_segments', COUNT(*) FROM route_segments
+    -> UNION ALL SELECT 'segment_infrastructure', COUNT(*) FROM segment_infrastructure
+    -> UNION ALL SELECT 'pedestrian_density', COUNT(*) FROM pedestrian_density
+    -> UNION ALL SELECT 'transport_stops', COUNT(*) FROM transport_stops
+    -> UNION ALL SELECT 'segment_transport', COUNT(*) FROM segment_transport
+    -> UNION ALL SELECT 'incidents', COUNT(*) FROM incidents
+    -> UNION ALL SELECT 'infrastructure_audit', COUNT(*) FROM infrastructure_audit;
++------------------------+-----------+
+| table_name             | row_count |
++------------------------+-----------+
+| users                  |         1 |
+| routes                 |         6 |
+| road_segments          |        15 |
+| route_segments         |        28 |
+| segment_infrastructure |        15 |
+| pedestrian_density     |        45 |
+| transport_stops        |        10 |
+| segment_transport      |        22 |
+| incidents              |        15 |
+| infrastructure_audit   |         3 |
++------------------------+-----------+
+10 rows in set (0.02 sec)
+
+mysql> notee;

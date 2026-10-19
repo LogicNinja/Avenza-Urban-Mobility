@@ -1,0 +1,50 @@
+mysql>
+mysql> USE avenza_exports_test;
+Database changed
+mysql>
+mysql> CALL GetIncidentsBySegment(1);
++-------------+------------+---------------+----------+---------------------+---------------------+
+| incident_id | segment_id | incident_type | severity | occurred_at         | reported_at         |
++-------------+------------+---------------+----------+---------------------+---------------------+
+|           1 |          1 | HARASSMENT    | HIGH     | 2026-10-02 20:15:00 | 2026-10-02 21:00:00 |
++-------------+------------+---------------+----------+---------------------+---------------------+
+1 row in set (0.00 sec)
+
+Query OK, 0 rows affected (0.00 sec)
+
+mysql>
+mysql> SHOW CREATE VIEW route_summary\G
+*************************** 1. row ***************************
+                View: route_summary
+         Create View: CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `route_summary` AS select `r`.`route_id` AS `route_id`,`r`.`route_name` AS `route_name`,`r`.`origin` AS `origin`,`r`.`destination` AS `destination`,count(`rs`.`segment_id`) AS `segment_count`,coalesce(sum(`s`.`length_m`),0) AS `total_distance_m`,round(((coalesce(sum(`s`.`length_m`),0) / 5000.0) * 60),2) AS `estimated_travel_time_min` from ((`routes` `r` left join `route_segments` `rs` on((`r`.`route_id` = `rs`.`route_id`))) left join `road_segments` `s` on((`rs`.`segment_id` = `s`.`segment_id`))) group by `r`.`route_id`,`r`.`route_name`,`r`.`origin`,`r`.`destination`
+character_set_client: utf8mb4
+collation_connection: utf8mb4_0900_ai_ci
+1 row in set (0.00 sec)
+
+mysql>
+mysql> SHOW CREATE PROCEDURE GetIncidentsBySegment\G
+*************************** 1. row ***************************
+           Procedure: GetIncidentsBySegment
+            sql_mode: ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+    Create Procedure: CREATE DEFINER=`root`@`localhost` PROCEDURE `GetIncidentsBySegment`(
+    IN p_segment_id INT
+)
+BEGIN
+    SELECT
+        incident_id,
+        segment_id,
+        incident_type,
+        severity,
+        occurred_at,
+        reported_at
+    FROM incidents
+    WHERE segment_id = p_segment_id
+    ORDER BY occurred_at DESC;
+END
+character_set_client: cp850
+collation_connection: cp850_general_ci
+  Database Collation: utf8mb4_0900_ai_ci
+1 row in set (0.00 sec)
+
+mysql>
+mysql> notee;
