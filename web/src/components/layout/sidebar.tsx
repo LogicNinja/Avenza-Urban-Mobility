@@ -4,53 +4,77 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Activity,
-  BusFront,
   LayoutDashboard,
   Map,
-  MapPin,
-  Menu,
-  ShieldAlert,
   Signpost,
+  ShieldAlert,
+  BusFront,
+  Menu,
   X,
 } from "lucide-react";
 import { useState } from "react";
 
 const navigation = [
-  { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Routes", href: "/dashboard/routes", icon: Map },
-  { label: "Road segments", href: "/dashboard/segments", icon: Signpost },
-  { label: "Safety incidents", href: "/dashboard/incidents", icon: ShieldAlert },
-  { label: "Transport stops", href: "/dashboard/transport", icon: BusFront },
+  {
+    label: "Overview",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    label: "Routes",
+    href: "/dashboard/routes",
+    icon: Map,
+  },
+  {
+    label: "Road segments",
+    href: "/dashboard/segments",
+    icon: Signpost,
+  },
+  {
+    label: "Safety incidents",
+    href: "/dashboard/incidents",
+    icon: ShieldAlert,
+  },
+  {
+    label: "Transport stops",
+    href: "/dashboard/transport",
+    icon: BusFront,
+  },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  function isActive(href: string) {
+    if (href === "/dashboard") {
+      return pathname === "/dashboard";
+    }
+
+    return pathname === href || pathname.startsWith(`${href}/`);
+  }
 
   function NavigationLinks() {
     return (
       <nav className="space-y-1">
         {navigation.map((item) => {
+          const active = isActive(item.href);
           const Icon = item.icon;
-          const active =
-            item.href === "/dashboard"
-              ? pathname === item.href
-              : pathname.startsWith(item.href);
 
           return (
             <Link
               key={item.href}
               href={item.href}
-              onClick={() => setOpen(false)}
-              className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition ${
+              onClick={() => setMobileOpen(false)}
+              aria-current={active ? "page" : undefined}
+              className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
                 active
-                  ? "bg-[#EAF2FD] text-[#294C7C]"
-                  : "text-[#58677D] hover:bg-[#F5F7FB] hover:text-[#172033]"
+                  ? "bg-[#EAF2FD] text-[#172033]"
+                  : "text-[#344054] hover:bg-[#F5F7FB]"
               }`}
             >
-              <Icon size={19} />
-              {item.label}
+              <Icon size={21} strokeWidth={active ? 2.3 : 2} />
+              <span>{item.label}</span>
             </Link>
           );
         })}
@@ -60,95 +84,78 @@ export default function Sidebar() {
 
   return (
     <>
-      <button
-        type="button"
-        aria-label="Open navigation"
-        aria-expanded={open}
-        onClick={() => setOpen(true)}
-        className="rounded-lg p-2 text-[#58677D] hover:bg-[#F5F7FB] lg:hidden"
-      >
-        <Menu size={23} />
-      </button>
-
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-[#E1E7F0] bg-white lg:flex">
-        <Link
-          href="/"
-          className="flex items-center gap-3 border-b border-[#E1E7F0] px-6 py-6"
-        >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#A5C5F0]">
-            <MapPin size={22} />
-          </div>
-          <div>
-            <p className="text-xl font-extrabold tracking-tight">avenza</p>
-            <p className="text-[10px] font-semibold tracking-[0.15em] text-[#58677D]">
-              URBAN MOBILITY
-            </p>
-          </div>
+      {/* Mobile menu button */}
+      <div className="sticky top-0 z-40 flex items-center justify-between border-b border-[#E1E7F0] bg-white px-4 py-3 lg:hidden">
+        <Link href="/" className="text-xl font-extrabold tracking-tight text-[#172033]">
+          avenza<span className="text-[#83ACE5]">.</span>
         </Link>
 
-        <div className="px-4 pt-8">
-          <p className="mb-3 px-3 text-xs font-bold uppercase tracking-[0.15em] text-[#8A9AB1]">
+        <button
+          type="button"
+          onClick={() => setMobileOpen(!mobileOpen)}
+          aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
+          aria-expanded={mobileOpen}
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#E1E7F0] text-[#172033]"
+        >
+          {mobileOpen ? <X size={21} /> : <Menu size={21} />}
+        </button>
+      </div>
+
+      {/* Mobile backdrop */}
+      {mobileOpen && (
+        <button
+          type="button"
+          aria-label="Close navigation menu"
+          onClick={() => setMobileOpen(false)}
+          className="fixed inset-0 z-40 bg-[#172033]/30 lg:hidden"
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col border-r border-[#E1E7F0] bg-white transition-transform duration-200 lg:sticky lg:top-0 lg:z-30 lg:h-screen lg:translate-x-0 ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex h-[76px] shrink-0 items-center border-b border-[#E8EDF4] px-7">
+          <Link
+            href="/"
+            className="text-2xl font-extrabold tracking-tight text-[#172033]"
+          >
+            avenza<span className="text-[#83ACE5]">.</span>
+          </Link>
+
+          <button
+            type="button"
+            onClick={() => setMobileOpen(false)}
+            aria-label="Close navigation"
+            className="ml-auto flex h-9 w-9 items-center justify-center rounded-lg text-[#64748B] hover:bg-[#F5F7FB] lg:hidden"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-2 py-6 sm:px-3">
+          <p className="mb-3 px-4 text-xs font-bold uppercase tracking-[0.16em] text-[#8794A7]">
             Workspace
           </p>
           <NavigationLinks />
         </div>
 
-        <div className="mt-auto p-4">
-          <div className="rounded-2xl bg-[#EDF3FB] p-4">
-            <div className="flex items-center gap-2 text-sm font-bold">
-              <Activity size={18} className="text-[#496FA8]" />
-              Project workspace
+        <div className="border-t border-[#E8EDF4] p-5">
+          <div className="rounded-2xl bg-[#F5F7FB] p-4">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-[#83ACE5]" />
+              <p className="text-xs font-bold text-[#344054]">
+                Avenza preview
+              </p>
             </div>
-            <p className="mt-2 text-xs leading-5 text-[#58677D]">
-              Explore urban mobility information and safety data.
+            <p className="mt-2 text-xs leading-5 text-[#718096]">
+              Exploring safer, more accessible urban journeys.
             </p>
-            <Link
-              href="/"
-              className="mt-3 inline-flex text-sm font-bold text-[#294C7C] hover:underline"
-            >
-              Visit homepage →
-            </Link>
           </div>
         </div>
       </aside>
-
-      {open && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <button
-            type="button"
-            aria-label="Close navigation overlay"
-            onClick={() => setOpen(false)}
-            className="absolute inset-0 bg-[#172033]/45"
-          />
-
-          <aside className="absolute inset-y-0 left-0 flex w-[min(300px,85vw)] flex-col bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#E1E7F0] px-5 py-5">
-              <Link href="/" className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#A5C5F0]">
-                  <MapPin size={22} />
-                </div>
-                <span className="text-xl font-extrabold">avenza</span>
-              </Link>
-
-              <button
-                type="button"
-                aria-label="Close navigation"
-                onClick={() => setOpen(false)}
-                className="rounded-lg p-2 hover:bg-[#F5F7FB]"
-              >
-                <X size={22} />
-              </button>
-            </div>
-
-            <div className="px-4 pt-7">
-              <p className="mb-3 px-3 text-xs font-bold uppercase tracking-widest text-[#8A9AB1]">
-                Workspace
-              </p>
-              <NavigationLinks />
-            </div>
-          </aside>
-        </div>
-      )}
     </>
   );
 }
